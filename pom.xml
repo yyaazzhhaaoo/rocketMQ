@@ -8,6 +8,9 @@
     <packaging>pom</packaging>
 
     <name>rocketmq</name>
+    <modules>
+        <module>rocketmq-provider</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
