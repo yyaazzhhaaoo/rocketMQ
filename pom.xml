@@ -17,6 +17,7 @@
     <modules>
         <module>rocketmq-provider</module>
         <module>rocketmq-consumer</module>
+        <module>rocketmq-server</module>
     </modules>
 
     <properties>
