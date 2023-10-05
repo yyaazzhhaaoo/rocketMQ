@@ -20,8 +20,7 @@ import java.util.List;
 /**
  * Unit test for simple App.
  */
-public class AppTest
-        extends TestCase {
+public class AppTest extends TestCase {
     /**
      * Create the test case
      *
@@ -60,18 +59,18 @@ public class AppTest
     public void testSimpleProducer() throws Exception {
         //创建一个消费者
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("test-consumer-group");
-        consumer.setNamesrvAddr("192.168.5.72:9876");
+        consumer.setNamesrvAddr("192.168.5.73:9876");
         //订阅一个主题
-        consumer.subscribe("test-topic", "*");
+        consumer.subscribe("onewayTopic", "*");
         //设置一个监听器
         consumer.registerMessageListener((MessageListenerConcurrently) (list, context) -> {
             System.out.println("我是消费者");
             for (MessageExt messageExt : list) {
                 String s = new String(messageExt.getBody(), StandardCharsets.UTF_8);
-                System.out.println(">>>>>"+s);
+                System.out.println(">>>>>" + s);
 
             }
-            System.out.println("消费上下文："+context);
+            System.out.println("消费上下文：" + context);
 
             /**
              * CONSUME_SUCCESS:消息会从mq出队
@@ -85,11 +84,11 @@ public class AppTest
         System.in.read();
     }
 
-    public void testAsyncProducer() throws Exception{
+    public void testAsyncProducer() throws Exception {
         //创建一个生产者
         DefaultMQProducer producer = new DefaultMQProducer("test-producer-group");
         //连接namesrv
-        producer.setNamesrvAddr("192.168.5.72:9876");
+        producer.setNamesrvAddr("192.168.5.73:9876");
         //启动生产者
         producer.start();
 
@@ -102,11 +101,20 @@ public class AppTest
 
             @Override
             public void onException(Throwable e) {
-                System.out.println("发送失败"+e.getMessage());
+                System.out.println("发送失败" + e.getMessage());
             }
         });
         System.out.println("我先执行");
         //关闭生产者
+        System.in.read();
+    }
+
+    public void testOnewayProducer() throws Exception {
+        DefaultMQProducer producer = new DefaultMQProducer("oneway-producer-group");
+        producer.setNamesrvAddr("192.168.5.73:9876");
+        producer.start();
+        Message message = new Message("onewayTopic", "单向消息发送".getBytes(StandardCharsets.UTF_8));
+        producer.sendOneway(message);
         producer.shutdown();
     }
 }
