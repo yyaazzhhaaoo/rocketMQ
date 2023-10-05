@@ -117,4 +117,30 @@ public class AppTest extends TestCase {
         producer.sendOneway(message);
         producer.shutdown();
     }
+
+    public void testMsProducer() throws Exception {
+        DefaultMQProducer producer = new DefaultMQProducer("ms-producer-group");
+        producer.setNamesrvAddr("192.168.5.73:9876");
+        producer.start();
+        Message message = new Message("msTopic", "延迟消息发送".getBytes(StandardCharsets.UTF_8));
+        message.setDelayTimeLevel(3);
+        producer.send(message);
+        producer.shutdown();
+    }
+
+    public void testMsConsumer() throws Exception {
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("ms-consumer-group");
+        consumer.setNamesrvAddr("192.168.5.73:9876");
+        consumer.subscribe("msTopic", "*");
+        consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
+            for (MessageExt msg : msgs) {
+                byte[] body = msg.getBody();
+                String s = new String(body, StandardCharsets.UTF_8);
+                System.out.println("接收到消息：" + s);
+            }
+            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+        });
+        consumer.start();
+        System.in.read();
+    }
 }
