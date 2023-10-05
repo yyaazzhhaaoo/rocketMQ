@@ -15,6 +15,7 @@ import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -61,7 +62,7 @@ public class AppTest extends TestCase {
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("test-consumer-group");
         consumer.setNamesrvAddr("192.168.5.73:9876");
         //订阅一个主题
-        consumer.subscribe("onewayTopic", "*");
+        consumer.subscribe("batchTopic", "*");
         //设置一个监听器
         consumer.registerMessageListener((MessageListenerConcurrently) (list, context) -> {
             System.out.println("我是消费者");
@@ -142,5 +143,19 @@ public class AppTest extends TestCase {
         });
         consumer.start();
         System.in.read();
+    }
+
+    public void testBatchProducer() throws Exception {
+        DefaultMQProducer producer = new DefaultMQProducer("batch-producer-group");
+        producer.setNamesrvAddr("192.168.5.73:9876");
+        producer.start();
+        List<Message> list = Arrays.asList(
+                new Message("batchTopic", "我是消息A".getBytes(StandardCharsets.UTF_8)),
+                new Message("batchTopic", "我是消息B".getBytes(StandardCharsets.UTF_8)),
+                new Message("batchTopic", "我是消息C".getBytes(StandardCharsets.UTF_8))
+        );
+//        message.setDelayTimeLevel(3);
+        producer.send(list);
+        producer.shutdown();
     }
 }
