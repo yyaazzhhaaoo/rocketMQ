@@ -8,6 +8,7 @@ import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
@@ -82,5 +83,30 @@ public class AppTest
         consumer.start();
 
         System.in.read();
+    }
+
+    public void testAsyncProducer() throws Exception{
+        //创建一个生产者
+        DefaultMQProducer producer = new DefaultMQProducer("test-producer-group");
+        //连接namesrv
+        producer.setNamesrvAddr("192.168.5.72:9876");
+        //启动生产者
+        producer.start();
+
+        Message message = new Message("async-topic", "我是一个异步消息发送者".getBytes(StandardCharsets.UTF_8));
+        producer.send(message, new SendCallback() {
+            @Override
+            public void onSuccess(SendResult sendResult) {
+                System.out.println("发送成功");
+            }
+
+            @Override
+            public void onException(Throwable e) {
+                System.out.println("发送失败"+e.getMessage());
+            }
+        });
+        System.out.println("我先执行");
+        //关闭生产者
+        producer.shutdown();
     }
 }
