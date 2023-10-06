@@ -1,18 +1,18 @@
 package com.myz.rocketmq;
 
+import com.myz.rocketmq.service.bean.OrderModel;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
-import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
-import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
-import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
-import org.apache.rocketmq.client.producer.DefaultMQProducer;
-import org.apache.rocketmq.client.producer.SendCallback;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
+import org.apache.rocketmq.client.consumer.listener.*;
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.*;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.message.MessageQueue;
+import org.apache.rocketmq.remoting.exception.RemotingException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -130,9 +130,9 @@ public class AppTest extends TestCase {
     }
 
     public void testMsConsumer() throws Exception {
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("ms-consumer-group");
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("orderly-consumer-group");
         consumer.setNamesrvAddr("192.168.5.73:9876");
-        consumer.subscribe("msTopic", "*");
+        consumer.subscribe("orderlyTopic", "*");
         consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
             for (MessageExt msg : msgs) {
                 byte[] body = msg.getBody();
@@ -149,13 +149,43 @@ public class AppTest extends TestCase {
         DefaultMQProducer producer = new DefaultMQProducer("batch-producer-group");
         producer.setNamesrvAddr("192.168.5.73:9876");
         producer.start();
-        List<Message> list = Arrays.asList(
-                new Message("batchTopic", "我是消息A".getBytes(StandardCharsets.UTF_8)),
-                new Message("batchTopic", "我是消息B".getBytes(StandardCharsets.UTF_8)),
-                new Message("batchTopic", "我是消息C".getBytes(StandardCharsets.UTF_8))
-        );
-//        message.setDelayTimeLevel(3);
+        List<Message> list = Arrays.asList(new Message("batchTopic", "我是消息A".getBytes(StandardCharsets.UTF_8)), new Message("batchTopic", "我是消息B".getBytes(StandardCharsets.UTF_8)), new Message("batchTopic", "我是消息C".getBytes(StandardCharsets.UTF_8)));
         producer.send(list);
         producer.shutdown();
+    }
+
+    public void testOrderly() throws Exception {
+        List<OrderModel> orderModels = Arrays.asList(new OrderModel("qwer", "1", "1"), new OrderModel("qwer", "1", "2"), new OrderModel("qwer", "1", "3"), new OrderModel("zxcv", "2", "1"), new OrderModel("zxcv", "2", "2"), new OrderModel("zxcv", "2", "3"));
+        DefaultMQProducer producer = new DefaultMQProducer("orderly-producer-group");
+        producer.setNamesrvAddr("192.168.5.73:9876");
+        producer.start();
+        orderModels.forEach(orderModel -> {
+            Message message = new Message("orderlyTopic", orderModel.toString().getBytes(StandardCharsets.UTF_8));
+            try {
+                producer.send(message, (mqs, msg, arg) -> {
+                    int i = arg.toString().hashCode();
+                    int index = i % mqs.size();
+                    return mqs.get(index);
+                }, orderModel.getOrderSn());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        producer.shutdown();
+    }
+
+    public void testOrderlyConsumer() throws Exception {
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("orderly-consumer-group");
+        consumer.setNamesrvAddr("192.168.5.73:9876");
+        consumer.subscribe("orderlyTopic", "*");
+        consumer.registerMessageListener((MessageListenerOrderly) (msgs, context) -> {
+            System.out.println("线程id:" + Thread.currentThread().getId());
+            for (MessageExt msg : msgs) {
+                System.out.println(new String(msg.getBody(), StandardCharsets.UTF_8));
+            }
+            return ConsumeOrderlyStatus.SUCCESS;
+        });
+        consumer.start();
+        System.in.read();
     }
 }
