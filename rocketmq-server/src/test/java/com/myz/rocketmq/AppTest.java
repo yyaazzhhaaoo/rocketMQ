@@ -6,17 +6,14 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.*;
-import org.apache.rocketmq.client.exception.MQBrokerException;
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.*;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
-import org.apache.rocketmq.common.message.MessageQueue;
-import org.apache.rocketmq.remoting.exception.RemotingException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Unit test for simple App.
@@ -73,9 +70,9 @@ public class AppTest extends TestCase {
             }
             System.out.println("消费上下文：" + context);
 
-            /**
-             * CONSUME_SUCCESS:消息会从mq出队
-             * RECONSUME_LATER:（报错/null）失败，消息会重新回到队列，过一会儿重新投递出来
+            /*
+              CONSUME_SUCCESS:消息会从mq出队
+              RECONSUME_LATER:（报错/null）失败，消息会重新回到队列，过一会儿重新投递出来
              */
             return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
         });
@@ -222,6 +219,85 @@ public class AppTest extends TestCase {
         consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
             for (MessageExt msg : msgs) {
                 System.out.println("我是vip2的消费者，我收到消息：" + new String(msg.getBody(), StandardCharsets.UTF_8));
+            }
+            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+        });
+        consumer.start();
+        System.in.read();
+    }
+
+    public void testKeyProducer() throws Exception {
+        DefaultMQProducer producer = new DefaultMQProducer("key-producer-group");
+        producer.setNamesrvAddr("192.168.5.73:9876");
+        producer.start();
+        String uuid = UUID.randomUUID().toString();
+
+        Message message = new Message("keyTopic", "vip1", uuid, "我是vip1的文章".getBytes(StandardCharsets.UTF_8));
+        producer.send(message);
+        System.out.println("发送成功");
+        producer.shutdown();
+    }
+
+    public void testRetryProducer() throws Exception {
+        DefaultMQProducer producer = new DefaultMQProducer("retry-producer-group");
+        producer.setNamesrvAddr("192.168.5.73:9876");
+        producer.start();
+        Message message = new Message("retryTopic", "vip1", "我是vip1的文章".getBytes(StandardCharsets.UTF_8));
+        producer.send(message);
+        System.out.println("发送成功");
+        producer.shutdown();
+    }
+
+    public void testRetryConsumer() throws Exception {
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("retry-consumer-group");
+        consumer.setNamesrvAddr("192.168.5.73:9876");
+        consumer.subscribe("retryTopic", "*");
+        //设置重试次数
+        consumer.setMaxReconsumeTimes(2);
+        consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
+            System.out.println("线程id:" + Thread.currentThread().getId());
+            for (MessageExt msg : msgs) {
+                System.out.println(new String(msg.getBody(), StandardCharsets.UTF_8));
+            }
+            return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+        });
+        consumer.start();
+        System.in.read();
+    }
+
+    public void testRetryDeadConsumer() throws Exception {
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("retry-dead-consumer-group");
+        consumer.setNamesrvAddr("192.168.5.73:9876");
+        //死信队列
+        consumer.subscribe("%DLQ%retry-consumer-group", "*");
+        consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
+            System.out.println("线程id:" + Thread.currentThread().getId());
+            for (MessageExt msg : msgs) {
+                System.out.println(new String(msg.getBody(), StandardCharsets.UTF_8));
+            }
+            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+        });
+        consumer.start();
+        System.in.read();
+    }
+
+    public void testRetryConsumer2() throws Exception {
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("retry-consumer-group");
+        consumer.setNamesrvAddr("192.168.5.73:9876");
+        consumer.subscribe("retryTopic", "*");
+        consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
+            System.out.println("线程id:" + Thread.currentThread().getId());
+            for (MessageExt msg : msgs) {
+                try {
+                    int i = 1 / 0;
+                } catch (Exception e) {
+                    int reconsumeTimes = msg.getReconsumeTimes();
+                    if (reconsumeTimes >= 3) {
+                        return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+                    }
+                    return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+                }
+                System.out.println(new String(msg.getBody(), StandardCharsets.UTF_8));
             }
             return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
         });
