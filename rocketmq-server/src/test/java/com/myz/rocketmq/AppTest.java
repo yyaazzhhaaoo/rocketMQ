@@ -188,4 +188,44 @@ public class AppTest extends TestCase {
         consumer.start();
         System.in.read();
     }
+
+    public void testTapProducer() throws Exception {
+        DefaultMQProducer producer = new DefaultMQProducer("tag-producer-group");
+        producer.setNamesrvAddr("192.168.5.73:9876");
+        producer.start();
+        Message message1 = new Message("tagTopic", "vip1", "我是vip1的文章".getBytes(StandardCharsets.UTF_8));
+        Message message2 = new Message("tagTopic", "vip2", "我是vip2的文章".getBytes(StandardCharsets.UTF_8));
+        producer.send(message1);
+        producer.send(message2);
+        System.out.println("发送成功");
+        producer.shutdown();
+    }
+
+    public void testTagConsumer1() throws Exception {
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("tag-consumer-group-a");
+        consumer.setNamesrvAddr("192.168.5.73:9876");
+        consumer.subscribe("tagTopic", "vip1");
+        consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
+            for (MessageExt msg : msgs) {
+                System.out.println("我是vip1的消费者，我收到消息：" + new String(msg.getBody(), StandardCharsets.UTF_8));
+            }
+            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+        });
+        consumer.start();
+        System.in.read();
+    }
+
+    public void testTagConsumer2() throws Exception {
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("tag-consumer-group-b");
+        consumer.setNamesrvAddr("192.168.5.73:9876");
+        consumer.subscribe("tagTopic", "vip1 || vip2");
+        consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
+            for (MessageExt msg : msgs) {
+                System.out.println("我是vip2的消费者，我收到消息：" + new String(msg.getBody(), StandardCharsets.UTF_8));
+            }
+            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+        });
+        consumer.start();
+        System.in.read();
+    }
 }
