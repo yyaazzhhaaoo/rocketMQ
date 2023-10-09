@@ -1,2 +1,21 @@
 server:
   port: 8085
+spring:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/myz?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false
+    username: root
+    password: root
+    type: com.alibaba.druid.pool.DruidDataSource
+  redis:
+    host: localhost
+    password: myz130124
+    port: 6379
+    database: 0
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.hbis.middleware.bean
+#rocketmq:
+#  name-server: localhost:9876
+#  producer:
+#    group: task-group
