@@ -1,14 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
+<!--    <parent>-->
         <groupId>com.myz.rocketmq</groupId>
-        <artifactId>rocketmq</artifactId>
+<!--        <artifactId>rocketmq</artifactId>-->
         <version>1.0.0</version>
-    </parent>
+<!--    </parent>-->
 
     <artifactId>rocketmq-server</artifactId>
-    <packaging>jar</packaging>
+<!--    <packaging>jar</packaging>-->
 
     <name>rocketmq-server</name>
     <url>http://maven.apache.org</url>
@@ -29,10 +29,12 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>1.18.24</version>
         </dependency>
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-client</artifactId>
+            <version>5.1.3</version>
         </dependency>
     </dependencies>
 

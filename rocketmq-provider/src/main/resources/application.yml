@@ -15,7 +15,7 @@ spring:
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.hbis.middleware.bean
-#rocketmq:
-#  name-server: localhost:9876
-#  producer:
-#    group: task-group
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: task-group
