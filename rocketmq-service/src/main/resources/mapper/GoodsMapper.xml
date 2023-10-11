@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.myz.rocketmq.mapper.GoodsMapper">
+
+    <resultMap id="BaseResultMap" type="com.myz.rocketmq.bean.Goods">
+            <id property="goodsId" column="goods_id" jdbcType="INTEGER"/>
+            <result property="goodsName" column="goods_name" jdbcType="VARCHAR"/>
+            <result property="price" column="price" jdbcType="DECIMAL"/>
+            <result property="content" column="content" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="INTEGER"/>
+            <result property="totalStocks" column="total_stocks" jdbcType="INTEGER"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="spike" column="spike" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `goods_id`,`goods_name`,`price`,
+        `content`,`status`,`total_stocks`,
+        `create_time`,`update_time`,`spike`
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from goods
+        where  goods_id = #{goodsId,jdbcType=INTEGER} 
+    </select>
+
+    <select id="list" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from goods
+        where  spike = 1 and status = 1
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from goods
+        where  goods_id = #{goodsId,jdbcType=INTEGER} 
+    </delete>
+    <insert id="insert" keyColumn="goods_id" keyProperty="goodsId" parameterType="com.myz.rocketmq.bean.Goods" useGeneratedKeys="true">
+        insert into goods
+        ( goods_id,goods_name,price
+        ,content,status,total_stocks
+        ,create_time,update_time,spike
+        )
+        values (#{goodsId,jdbcType=INTEGER},#{goodsName,jdbcType=VARCHAR},#{price,jdbcType=DECIMAL}
+        ,#{content,jdbcType=VARCHAR},#{status,jdbcType=INTEGER},#{totalStocks,jdbcType=INTEGER}
+        ,#{createTime,jdbcType=TIMESTAMP},#{updateTime,jdbcType=TIMESTAMP},#{spike,jdbcType=INTEGER}
+        )
+    </insert>
+    <insert id="insertSelective" keyColumn="goods_id" keyProperty="goodsId" parameterType="com.myz.rocketmq.bean.Goods" useGeneratedKeys="true">
+        insert into goods
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="goodsId != null">goods_id,</if>
+                <if test="goodsName != null">goods_name,</if>
+                <if test="price != null">price,</if>
+                <if test="content != null">content,</if>
+                <if test="status != null">status,</if>
+                <if test="totalStocks != null">total_stocks,</if>
+                <if test="createTime != null">create_time,</if>
+                <if test="updateTime != null">update_time,</if>
+                <if test="spike != null">spike,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="goodsId != null">#{goodsId,jdbcType=INTEGER},</if>
+                <if test="goodsName != null">#{goodsName,jdbcType=VARCHAR},</if>
+                <if test="price != null">#{price,jdbcType=DECIMAL},</if>
+                <if test="content != null">#{content,jdbcType=VARCHAR},</if>
+                <if test="status != null">#{status,jdbcType=INTEGER},</if>
+                <if test="totalStocks != null">#{totalStocks,jdbcType=INTEGER},</if>
+                <if test="createTime != null">#{createTime,jdbcType=TIMESTAMP},</if>
+                <if test="updateTime != null">#{updateTime,jdbcType=TIMESTAMP},</if>
+                <if test="spike != null">#{spike,jdbcType=INTEGER},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.myz.rocketmq.bean.Goods">
+        update goods
+        <set>
+                <if test="goodsName != null">
+                    goods_name = #{goodsName,jdbcType=VARCHAR},
+                </if>
+                <if test="price != null">
+                    price = #{price,jdbcType=DECIMAL},
+                </if>
+                <if test="content != null">
+                    content = #{content,jdbcType=VARCHAR},
+                </if>
+                <if test="status != null">
+                    status = #{status,jdbcType=INTEGER},
+                </if>
+                <if test="totalStocks != null">
+                    total_stocks = #{totalStocks,jdbcType=INTEGER},
+                </if>
+                <if test="createTime != null">
+                    create_time = #{createTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="updateTime != null">
+                    update_time = #{updateTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="spike != null">
+                    spike = #{spike,jdbcType=INTEGER},
+                </if>
+        </set>
+        where   goods_id = #{goodsId,jdbcType=INTEGER} 
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.myz.rocketmq.bean.Goods">
+        update goods
+        set 
+            goods_name =  #{goodsName,jdbcType=VARCHAR},
+            price =  #{price,jdbcType=DECIMAL},
+            content =  #{content,jdbcType=VARCHAR},
+            status =  #{status,jdbcType=INTEGER},
+            total_stocks =  #{totalStocks,jdbcType=INTEGER},
+            create_time =  #{createTime,jdbcType=TIMESTAMP},
+            update_time =  #{updateTime,jdbcType=TIMESTAMP},
+            spike =  #{spike,jdbcType=INTEGER}
+        where   goods_id = #{goodsId,jdbcType=INTEGER} 
+    </update>
+</mapper>
